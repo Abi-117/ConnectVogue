@@ -19,7 +19,7 @@ const Sidebar = () => {
         <Link to="/admin/hero">Hero Slides</Link>
 
         <Link to="/admin/categories">Categories</Link>
-        <Link to="/admin/products">Products</Link>
+        {/* <Link to="/admin/products">Products</Link> */}
         <Link to="/admin/productdetails">Product Details</Link>
 
         <Link to="/admin/orders">Orders</Link>
@@ -31,8 +31,8 @@ const Sidebar = () => {
         <Link to="/admin/features">Feature Management</Link>
         <Link to="/admin/footer">Footer</Link>
         <Link to="/admin/pending-products">Pending Products</Link>
-        <Link to="/admin/create-vendor">Create Vendor</Link>
-        <Link to="/admin/vendor-approvals">Vendor Approvals</Link>
+        {/* <Link to="/admin/create-vendor">Create Vendor</Link> */}
+        {/* <Link to="/admin/vendor-approvals">Vendor Approvals</Link> */}
 
 
         <button onClick={logout} className="text-left mt-6 text-red-400">

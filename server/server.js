@@ -19,7 +19,7 @@ import orderRoutes from "./routes/order.routes.js";
 import footerRoutes from "./routes/footer.routes.js";
 import adminAuthRoutes from "./routes/adminAuth.routes.js";
 import vendorAuthRoutes from "./routes/vendorAuth.routes.js";
-
+import adminproductRoutes from "./routes/adminProductRoutes.js";
 
 import upload from "./middleware/upload.js"; 
 
@@ -62,6 +62,8 @@ app.use("/api/footer", footerRoutes);
 
 app.use("/api/admin", adminAuthRoutes);
 app.use("/api/vendor", vendorAuthRoutes);
+app.use("/api/adminproducts", adminproductRoutes);
+
 // Test route
 app.get("/", (req, res) => {
   res.send("API is running");

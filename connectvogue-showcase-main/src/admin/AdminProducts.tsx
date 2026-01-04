@@ -22,29 +22,25 @@ interface Product {
   description?: string;
   sizes: string[];
   colors: Color[];
-  image?: string;
+  image?: string; // URL instead of File
 }
 
-/* ✅ FIX: slug-based sizes */
 const CATEGORY_SIZES: Record<string, string[]> = {
-  "mens-fashion": ["XS", "S", "M", "L", "XL", "XXL"],
-  "womens-fashion": ["XS", "S", "M", "L", "XL"],
-  footwear: ["6", "7", "8", "9", "10", "11"],
-  sportswear: ["S", "M", "L", "XL"],
-  electronics: ["64GB", "128GB", "256GB", "512GB"],
-  accessories: ["One Size"],
-  "seasonal-gifts": ["Small", "Medium", "Large"],
-  "home-lifestyle": ["Small", "Medium", "Large", "XL"],
+  "Men's Fashion": ["XS", "S", "M", "L", "XL", "XXL"],
+  "Women's Fashion": ["XS", "S", "M", "L", "XL"],
+  Footwear: ["6", "7", "8", "9", "10", "11"],
+  Sportswear: ["S", "M", "L", "XL"],
+  Electronics: ["64GB", "128GB", "256GB", "512GB"],
+  Accessories: ["One Size"],
+  "Seasonal Gifts": ["Small", "Medium", "Large"],
+  "Home & Lifestyle": ["Small", "Medium", "Large", "XL"],
 };
 
 export default function AdminProduct() {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(false);
-
   const [productData, setProductData] = useState<Product>({
     name: "",
     price: 0,
-    originalPrice: undefined,
     category: "",
     sizes: [],
     colors: [],
@@ -53,8 +49,9 @@ export default function AdminProduct() {
 
   const [colorName, setColorName] = useState("");
   const [colorHex, setColorHex] = useState("#000000");
+  const [loading, setLoading] = useState(false);
 
-  /* Fetch categories */
+  // Fetch categories dynamically
   useEffect(() => {
     fetch("http://localhost:5000/api/categories")
       .then(res => res.json())
@@ -62,9 +59,8 @@ export default function AdminProduct() {
       .catch(console.error);
   }, []);
 
-  /* ✅ FIXED sizes logic */
-  const sizesForCategory =
-    CATEGORY_SIZES[productData.category] || [];
+  const selectedCategory = categories.find(c => c.slug === productData.category);
+  const sizesForCategory = (selectedCategory && CATEGORY_SIZES[selectedCategory.name]) || [];
 
   const toggleSize = (size: string) => {
     setProductData(prev => ({
@@ -76,59 +72,56 @@ export default function AdminProduct() {
   };
 
   const addColor = () => {
-    if (!colorName.trim()) return;
-
+    if (!colorName) return;
     setProductData(prev => ({
       ...prev,
       colors: [...prev.colors, { name: colorName, hex: colorHex }],
     }));
-
     setColorName("");
     setColorHex("#000000");
   };
 
-  const removeColor = (index: number) => {
-    setProductData(prev => ({
-      ...prev,
-      colors: prev.colors.filter((_, i) => i !== index),
-    }));
-  };
-
   const handleAddProduct = async () => {
-    if (
-      !productData.name.trim() ||
-      productData.price <= 0 ||
-      !productData.category
-    ) {
-      alert("⚠️ Name, valid price & category required");
-      return;
-    }
-
     try {
+      if (!productData.name || !productData.price || !productData.category) {
+        alert("⚠️ Name, Price & Category are required");
+        return;
+      }
+
       setLoading(true);
 
-      const res = await fetch("http://localhost:5000/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(productData),
-      });
+      const payload = {
+        ...productData,
+        sizes: productData.sizes,
+        colors: productData.colors,
+        image: productData.image || "",
+      };
 
-      if (!res.ok) throw new Error("Failed");
+      const res = await fetch("http://localhost:5000/api/adminproducts", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(payload),
+});
+
+
+      if (!res.ok) throw new Error("Failed to add product");
 
       alert("✅ Product added successfully");
+      window.dispatchEvent(new Event("product-added"));
 
       setProductData({
         name: "",
         price: 0,
-        originalPrice: undefined,
         category: "",
         sizes: [],
         colors: [],
         image: "",
       });
     } catch (err) {
-      console.error(err);
       alert("❌ Error adding product");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -136,43 +129,33 @@ export default function AdminProduct() {
 
   return (
     <div className="p-8 max-w-3xl space-y-8">
-      <h1 className="text-3xl font-bold">Admin – Add Product</h1>
+      <h1 className="text-3xl font-bold">Admin – Products</h1>
 
       <div className="bg-white border rounded-xl p-6 space-y-6 shadow">
-        {/* Name */}
+        {/* Product Name */}
         <input
           placeholder="Product Name"
           className="border p-2 rounded w-full"
           value={productData.name}
-          onChange={e =>
-            setProductData({ ...productData, name: e.target.value })
-          }
+          onChange={e => setProductData({ ...productData, name: e.target.value })}
         />
 
-        {/* Price */}
+        {/* Price & Original Price */}
         <div className="grid grid-cols-2 gap-4">
           <input
             type="number"
             placeholder="Price"
             className="border p-2 rounded"
             value={productData.price}
-            onChange={e =>
-              setProductData({
-                ...productData,
-                price: Number(e.target.value),
-              })
-            }
+            onChange={e => setProductData({ ...productData, price: Number(e.target.value) })}
           />
           <input
             type="number"
             placeholder="Original Price"
             className="border p-2 rounded"
-            value={productData.originalPrice ?? ""}
+            value={productData.originalPrice || ""}
             onChange={e =>
-              setProductData({
-                ...productData,
-                originalPrice: Number(e.target.value),
-              })
+              setProductData({ ...productData, originalPrice: Number(e.target.value) })
             }
           />
         </div>
@@ -181,13 +164,7 @@ export default function AdminProduct() {
         <select
           className="border p-2 rounded w-full"
           value={productData.category}
-          onChange={e =>
-            setProductData({
-              ...productData,
-              category: e.target.value,
-              sizes: [],
-            })
-          }
+          onChange={e => setProductData({ ...productData, category: e.target.value })}
         >
           <option value="">Select Category</option>
           {categories.map(c => (
@@ -208,9 +185,7 @@ export default function AdminProduct() {
                   type="button"
                   onClick={() => toggleSize(size)}
                   className={`px-3 py-1 rounded-full border text-sm ${
-                    productData.sizes.includes(size)
-                      ? "bg-black text-white"
-                      : ""
+                    productData.sizes.includes(size) ? "bg-black text-white" : ""
                   }`}
                 >
                   {size}
@@ -230,11 +205,7 @@ export default function AdminProduct() {
               value={colorName}
               onChange={e => setColorName(e.target.value)}
             />
-            <input
-              type="color"
-              value={colorHex}
-              onChange={e => setColorHex(e.target.value)}
-            />
+            <input type="color" value={colorHex} onChange={e => setColorHex(e.target.value)} />
             <Button type="button" onClick={addColor}>
               Add
             </Button>
@@ -244,37 +215,35 @@ export default function AdminProduct() {
             {productData.colors.map((c, i) => (
               <span
                 key={i}
-                onClick={() => removeColor(i)}
-                className="px-3 py-1 rounded-full border text-sm cursor-pointer"
+                className="px-3 py-1 rounded-full border text-sm"
                 style={{ color: c.hex, borderColor: c.hex }}
-                title="Click to remove"
               >
-                {c.name} ✕
+                {c.name}
               </span>
             ))}
           </div>
         </div>
 
-        {/* Image */}
-        <input
-          placeholder="Image URL"
-          className="border p-2 rounded w-full"
-          value={productData.image || ""}
-          onChange={e =>
-            setProductData({ ...productData, image: e.target.value })
-          }
-        />
-
-        {productData.image?.startsWith("http") && (
-          <img
-            src={productData.image}
-            alt="Preview"
-            className="w-32 h-32 object-cover rounded"
+        {/* Image URL */}
+        <div>
+          <input
+            type="text"
+            placeholder="Image URL"
+            className="border p-2 rounded w-full"
+            value={productData.image || ""}
+            onChange={e => setProductData({ ...productData, image: e.target.value })}
           />
-        )}
+          {productData.image && (
+            <img
+              src={productData.image}
+              alt="Preview"
+              className="mt-2 w-32 h-32 object-cover rounded"
+            />
+          )}
+        </div>
 
-        {/* Submit */}
-        <Button className="w-full" onClick={handleAddProduct} disabled={loading}>
+        {/* Add Product Button */}
+        <Button className="w-full" disabled={loading} onClick={handleAddProduct}>
           {loading ? "Adding..." : "Add Product"}
         </Button>
       </div>

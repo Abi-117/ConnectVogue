@@ -73,7 +73,7 @@ const VendorDashboard = () => {
       </button>
       <button
         onClick={() => navigate("/vendor/products")}
-        className="bg-blue-600 text-white px-6 py-3 rounded"
+        className="bg-blue-600 text-white m-6 px-4 py-2 rounded"
       >
         📦 View My Products
       </button>
